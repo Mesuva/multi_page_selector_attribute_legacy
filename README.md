@@ -1,4 +1,4 @@
-multi_page_selector_attribute
+Multi-Page Selector Attribute
 =============================
 
 A concrete5 attribute to select multiple pages in an sortable list
