@@ -1,7 +1,7 @@
 Multi-Page Selector Attribute
 =============================
 
-A concrete5 attribute to select multiple pages in an sortable list
+A concrete5 attribute to select multiple pages in a sortable list
 
 Once installed, you can fetch the attribute in a page template one of two ways:
 
