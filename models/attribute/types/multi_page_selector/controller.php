@@ -68,11 +68,12 @@ class MultiPageSelectorAttributeTypeController extends AttributeTypeController  
 				$pages[] = $page;
 			}
 		}
+		
+		$akid = $ak->getAttributeKeyID();
 	 	
-		print '<input type="hidden" id="'. $this->field('value'). '" name="'. $this->field('value'). '" value="'.$value.'" />';
-		print '<img src="'.ASSETS_URL_IMAGES.'/icons/up_down.png" class="sortimage_proto" height="14" width="14" style="cursor:move; display: none;">';
-		print '<img src="'.ASSETS_URL_IMAGES.'/icons/remove.png" class="deleteimage_proto" height="14" width="14" style="cursor:pointer; display: none;">';
-		print '<table class="pagelist table" style="width: 100%">';
+	 	echo '<div id="multipageselector_' . $akid  . '">';
+		echo '<input type="hidden" id="'. $this->field('value'). '" name="'. $this->field('value'). '" value="'.$value.'" />';
+		echo '<table id="pagelist_'. $akid . '" class="pagelist table" style="width: 100%">';
 	 	 
 		foreach($pages as $page) {
 			echo '<tr class="sortable_row" data-pageid="'. $page->getCollectionID() .'"><td class="sort_handle"><img src="'.ASSETS_URL_IMAGES.'/icons/up_down.png"   height="14" width="14" style="cursor:move;"></td><td>' . $page->getCollectionName() . '</td><td class="delete_handle"><img src="'.ASSETS_URL_IMAGES.'/icons/remove.png"  height="14" width="14" style="cursor:pointer;"></td></tr>';
@@ -80,61 +81,88 @@ class MultiPageSelectorAttributeTypeController extends AttributeTypeController  
 		
 		echo '</table>';
 		
-		print $form_selector->selectPage('pselector', '', 'pla_pageselected');
-		print "<script type=\"text/javascript\">
-		 
-		function pla_pageselected(id, name) {
-		 
-		 	var sorthandle = $('.ccm-sitemap-select-page').parent().parent().find('.sortimage_proto').clone();
-		 	var deletehandle = $('.ccm-sitemap-select-page').parent().parent().find('.deleteimage_proto').clone();
-		 	sorthandle.css('display','block').removeClass('sortimage_proto');
-		 	deletehandle.css('display','block').removeClass('deleteimage_proto');
-		 	  
-		 	var pagelist = $('.ccm-sitemap-select-page').parent().parent().find('.pagelist');
+	 
+		echo $form_selector->selectPage('pselector', '', 'pla_pageselected_' .  $akid);
+ 
+		
+		echo "<script type=\"text/javascript\">
+		var lastselected = 0;
+	 	 
+	 	 
+		function pla_pageselected_".  $akid ."(id, name) {
+		     
+		 	var pagelist = $('#pagelist_'+ lastselected);
 		 	var newrow = $('<tr class=\"sortable_row\" data-pageid=\"'+ id +'\"><td class=\"sort_handle\"> </td><td>' + name + '</td><td class=\"delete_handle\"></td></tr>');
 		 	
 		 	pagelist.append(newrow);
-		 	newrow.find('.sort_handle').append(sorthandle); 
-		 	newrow.find('.delete_handle').append(deletehandle); 
+		 	newrow.find('.sort_handle').append('<img src=\"".ASSETS_URL_IMAGES."/icons/up_down.png\" height=\"14\" width=\"14\" style=\"cursor:move;\">'); 
+		 	newrow.find('.delete_handle').append('<img src=\"".ASSETS_URL_IMAGES."/icons/remove.png\" height=\"14\" width=\"14\" style=\"cursor:pointer;\">'); 
 		 
-		 	$('.delete_handle img').click(function(){
+		 	$('#pagelist_'+ lastselected + ' .delete_handle img').click(function(){
 		 		$(this).parent().parent().remove(); 
-		 		pla_updatefield() 
+		 		pla_updatefield_".  $akid . "() 
 		 	});
 		 	
-		 	pla_updatefield();
+		 	pla_updatefield_".  $akid . "();
 		 	clearPageSelection();
 		}
 		 
-		function pla_updatefield() {
+		function pla_updatefield_".  $akid . "() {
 				 
-				var field = $('#akID\\\\[".$ak->getAttributeKeyID()."\\\\]\\\\[value\\\\]');
+				var field = $('#akID\\\\['+lastselected+'\\\\]\\\\[value\\\\]');
 				var data = new Array();
 				 
-				$('.pagelist .sortable_row').each(function(){
+				$('#pagelist_'+ lastselected + ' .sortable_row').each(function(){
 					data.push($(this).data('pageid'));
 				});
 				
 				field.val(data.join(','));
 		}
 		
+		
+		function pla_updatefieldsort_".  $akid . "() {
+				 
+				var field = $('#akID\\\\[".$akid ."\\\\]\\\\[value\\\\]');
+				var data = new Array();
+				 
+				$('#pagelist_".$akid." .sortable_row').each(function(){
+					data.push($(this).data('pageid'));
+				});
+				
+				field.val(data.join(','));
+		}
 		 
 		$(document).ready(function(){
-		  $('.pagelist').sortable({ items : '.sortable_row',
+		  $('#pagelist_". $akid ."').sortable({ items : '.sortable_row',
 		        handle: '.sort_handle',
-		        update: pla_updatefield
+		        update: pla_updatefieldsort_" .  $akid . "
 		    });
 		    
-		   $('.delete_handle img').click(function(){
+		   $('#pagelist_". $akid ." .delete_handle img').click(function(){
 		   		$(this).parent().parent().remove(); 
-		   		pla_updatefield() 
+		   		pla_updatefieldsort_".  $akid . "();
 		   }); 
-		    
+		   
+		   // included to handle limitation of page properties dialog
+		   $(document).on('hover','#multipageselector_" . $akid .  " .ccm-sitemap-select-page' , function(e){
+		         lastselected = ".$akid.";
+		   })
+		   
 		});
-		 
 		
-		</script>";
 		
+		// included to handed composer
+		$(window).load(function() { 
+			$('#multipageselector_" . $akid .  " .ccm-sitemap-select-page').click(function(){
+				    lastselected = ".$akid.";
+			});
+			
+		});
+	   	
+	 		  		  
+	 	</script>";
+		
+		echo '</div>';
 	}
 	
  
