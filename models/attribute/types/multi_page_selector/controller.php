@@ -47,14 +47,16 @@ class MultiPageSelectorAttributeTypeController extends AttributeTypeController  
 	
 	
  	public function form() {
-		if (is_object($this->attributeValue)) {
+        if (is_object($this->attributeValue)) {
 			$value = trim($this->getAttributeValue()->getValue());
 		}
 		
 		$ak = $this->getAttributeKey();
 		
 		$form_selector = Loader::helper('form/page_selector');
-		$page_ids = array();
+        $this->addHeaderItem(Loader::helper('html')->javascript($this->attributeType->getAttributeTypeFileURL('form.js')));
+
+        $page_ids = array();
 		
 		if ($value) {
 			$page_ids = explode(',', $value);
@@ -68,103 +70,52 @@ class MultiPageSelectorAttributeTypeController extends AttributeTypeController  
 				$pages[] = $page;
 			}
 		}
-		
-		$akid = $ak->getAttributeKeyID();
-	 	
-	 	echo '<div id="multipageselector_' . $akid  . '">';
-		echo '<input type="hidden" id="'. $this->field('value'). '" name="'. $this->field('value'). '" value="'.$value.'" />';
-		echo '<table id="pagelist_'. $akid . '" class="pagelist table" style="width: 100%">';
+
+        $akid = $ak->getAttributeKeyID();
+
+        echo '<div id="multipageselector-' . $akid  . '" class="multipageselector" data-akid="' . $akid . ' ">';
+        echo '<input type="hidden" class="selectedPages" id="'. $this->field('value'). '" name="'. $this->field('value'). '" value="'.$value.'" />';
+        echo '<table style="width: 100%">';
 	 	 
 		foreach($pages as $page) {
-			echo '<tr class="sortable_row" data-pageid="'. $page->getCollectionID() .'"><td class="sort_handle"><img src="'.ASSETS_URL_IMAGES.'/icons/up_down.png"   height="14" width="14" style="cursor:move;"></td><td>' . $page->getCollectionName() . '</td><td class="delete_handle"><img src="'.ASSETS_URL_IMAGES.'/icons/remove.png"  height="14" width="14" style="cursor:pointer;"></td></tr>';
+			echo '<tr class="sortable_row" data-pageid="'. $page->getCollectionID() .'"><td class="sort"><img src="'.ASSETS_URL_IMAGES.'/icons/up_down.png" alt="sort" height="14" width="14" style="cursor:move;"></td><td>' . $page->getCollectionName() . '</td><td class="delete"><img src="'.ASSETS_URL_IMAGES.'/icons/remove.png" alt="delete" height="14" width="14" style="cursor:pointer;"></td></tr>';
 		}
 		
 		echo '</table>';
-		
-	 
-		echo $form_selector->selectPage('pselector', '', 'pla_pageselected_' .  $akid);
- 
-		
-		echo "<script type=\"text/javascript\">
-		var lastselected = 0;
-	 	 
-	 	 
-		function pla_pageselected_".  $akid ."(id, name) {
-		     
-		 	var pagelist = $('#pagelist_'+ lastselected);
-		 	var newrow = $('<tr class=\"sortable_row\" data-pageid=\"'+ id +'\"><td class=\"sort_handle\"> </td><td>' + name + '</td><td class=\"delete_handle\"></td></tr>');
-		 	
-		 	pagelist.append(newrow);
-		 	newrow.find('.sort_handle').append('<img src=\"".ASSETS_URL_IMAGES."/icons/up_down.png\" height=\"14\" width=\"14\" style=\"cursor:move;\">'); 
-		 	newrow.find('.delete_handle').append('<img src=\"".ASSETS_URL_IMAGES."/icons/remove.png\" height=\"14\" width=\"14\" style=\"cursor:pointer;\">'); 
-		 
-		 	$('#pagelist_'+ lastselected + ' .delete_handle img').click(function(){
-		 		$(this).parent().parent().remove(); 
-		 		pla_updatefield_".  $akid . "() 
-		 	});
-		 	
-		 	pla_updatefield_".  $akid . "();
-		 	clearPageSelection();
-		}
-		 
-		function pla_updatefield_".  $akid . "() {
-				 
-				var field = $('#akID\\\\['+lastselected+'\\\\]\\\\[value\\\\]');
-				var data = new Array();
-				 
-				$('#pagelist_'+ lastselected + ' .sortable_row').each(function(){
-					data.push($(this).data('pageid'));
-				});
-				
-				field.val(data.join(','));
-		}
-		
-		
-		function pla_updatefieldsort_".  $akid . "() {
-				 
-				var field = $('#akID\\\\[".$akid ."\\\\]\\\\[value\\\\]');
-				var data = new Array();
-				 
-				$('#pagelist_".$akid." .sortable_row').each(function(){
-					data.push($(this).data('pageid'));
-				});
-				
-				field.val(data.join(','));
-		}
-		 
-		$(document).ready(function(){
-		  $('#pagelist_". $akid ."').sortable({ items : '.sortable_row',
-		        handle: '.sort_handle',
-		        update: pla_updatefieldsort_" .  $akid . "
-		    });
-		    
-		   $('#pagelist_". $akid ." .delete_handle img').click(function(){
-		   		$(this).parent().parent().remove(); 
-		   		pla_updatefieldsort_".  $akid . "();
-		   }); 
-		   
-		   // included to handle limitation of page properties dialog
-		   $(document).on('hover','#multipageselector_" . $akid .  " .ccm-sitemap-select-page' , function(e){
-		         lastselected = ".$akid.";
-		   })
-		   
-		});
-		
-		
-		// included to handed composer
-		$(window).load(function() { 
-			$('#multipageselector_" . $akid .  " .ccm-sitemap-select-page').click(function(){
-				    lastselected = ".$akid.";
-			});
-			
-		});
-	   	
-	 		  		  
-	 	</script>";
-		
-		echo '</div>';
+
+        echo $form_selector->selectPage('pselector', '', 'ccmMultipageSelectorUpdateCallback');
+        $assetsUrlImages = ASSETS_URL_IMAGES;
+
+        echo <<<EOM
+<script type="text/javascript">
+    var multipageSelectorAttrId,
+        ccmMultipageSelectorUpdateCallback;
+
+    (function($) { // hide the namespace
+        if ('function' !== typeof ccmMultipageSelectorUpdateCallback) {
+            $.ccmmultipageselector.setDefaults({'assetImageUrl': '{$assetsUrlImages}'});
+
+
+            ccmMultipageSelectorUpdateCallback = function(linkId, linkLabel) {
+                $('#multipageselector-' + multipageSelectorAttrId).ccmmultipageselector('addPageLink', {'linkId': linkId, 'linkLabel': linkLabel});
+            }
+        }
+    })(jQuery);
+
+    $(document).ready(function () {
+        // included to handle limitation of page properties dialog
+        $('.multipageselector').closest('form').off('mouseover.ccmmultipageselector').on('mouseover.ccmmultipageselector', '.multipageselector', function(event){
+            multipageSelectorAttrId = \$(this).data('akid');
+        })
+
+        $('#multipageselector-{$akid}').ccmmultipageselector();
+    });
+</script>
+EOM;
+
+        echo "</div> <!-- end:#multipageselector-{$akid} -->";
 	}
-	
+
  
 	public function saveValue($value) {
 		$db = Loader::db();
