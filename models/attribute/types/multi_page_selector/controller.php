@@ -36,6 +36,7 @@ class MultiPageSelectorAttributeTypeController extends AttributeTypeController  
 		
 		foreach($pages as $p) {
 			$links[] = array(
+			'cObj'=>$p,
 			'cID'=>$p->getCollectionID(),
 			'url'=>NavigationHelper::getLinkToCollection($p, $full), 
 			'name'=>$p->getCollectionName());

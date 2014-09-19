@@ -6,7 +6,7 @@ class MultiPageSelectorAttributePackage extends Package {
 
 	protected $pkgHandle = 'multi_page_selector_attribute';
 	protected $appVersionRequired = '5.4.0';
-	protected $pkgVersion = '0.9.1';
+	protected $pkgVersion = '0.9.2';
 	
 	public function getPackageDescription() {
 		return t("Attribute that allows the selection of multiple pages in a sortable list.");
